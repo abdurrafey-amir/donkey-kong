@@ -33,6 +33,7 @@ row5_top = row5_y - (slope * 8)
 row6_top = row6_y - (slope * 4)
 
 # levels
+active_level = 0
 levels = [
     {'bridges': [
         (1, start_y, 15), (16, start_y - slope, 3),
@@ -80,8 +81,9 @@ black = (0, 0, 0)
 white = (255, 255, 255)
 red = (255, 0, 0)
 blue = (0, 0, 255)
+light_blue = pygame.Color('light blue')
 
-# class
+# classes
 class Platform:
     
     def __init__(self, x_pos, y_pos, length):
@@ -111,18 +113,46 @@ class Platform:
         top_surface = pygame.rect.FRect((self.x_pos, self.y_pos), (self.length * section_width, 2))
         pygame.draw.rect(window, blue, top_surface) 
 
+class Ladder:
 
+    def __init__(self, x_pos, y_pos, length):
+        self.x_pos = x_pos * section_width
+        self.y_pos = y_pos
+        self.length = length
+        self.body = self.draw()
+
+    def draw(self):
+        line_width = 3
+        ladder_color = light_blue
+        ladder_height = 0.6
+        
+        for i in range(self.length):
+            top_coord = self.y_pos + ladder_height * section_height * i
+            bottom_coord = top_coord + ladder_height * section_height
+            mid_coord = ladder_height / 2 + top_coord
+            left_coord = self.x_pos
+            right_coord = left_coord + section_width
+            
+            pygame.draw.line(window, ladder_color, (left_coord, top_coord), (left_coord, bottom_coord), line_width)
+            pygame.draw.line(window, ladder_color, (right_coord, top_coord), (right_coord, bottom_coord), line_width)
+            pygame.draw.line(window, ladder_color, (left_coord, mid_coord), (right_coord, mid_coord), line_width)
             
             
 
 # functions
 def draw_screen():
-    platforms = [(7, 300, 15)]
-    ladders = []
-    platform_objs = []
+    platforms = []
+    ladders_list = []
+    bridge_objs = []
 
-    for platform in platforms:
-        platform_objs.append(Platform(*platform))
+    ladders = levels[active_level]['ladders']
+    bridges = levels[active_level]['bridges']
+
+    for bridge in bridges:
+        bridge_objs.append(Platform(*bridge))
+        platforms.append(bridge_objs[-1].top)
+    
+    return platforms
 
 
 # main loop
@@ -137,7 +167,7 @@ while running:
 
     # draw
     window.fill(black)
-    draw_screen()
+    platforms = draw_screen()
 
     pygame.display.flip()
 
