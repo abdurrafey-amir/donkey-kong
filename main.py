@@ -124,8 +124,10 @@ class Platform:
             pygame.draw.line(window, platform_color, (x_coord, bottom_coord), (mid_coord, top_coord), line_width)
 
         # for collisions
-        top_surface = pygame.rect.FRect((self.x_pos, self.y_pos), (self.length * section_width, 2))
+        top_surface = pygame.rect.Rect((self.x_pos, self.y_pos), (self.length * section_width, 2))
         # pygame.draw.rect(window, blue, top_surface) 
+        
+        return top_surface
 
 class Ladder:
 
@@ -151,12 +153,12 @@ class Ladder:
             pygame.draw.line(window, ladder_color, (right_coord, top_coord), (right_coord, bottom_coord), line_width)
             pygame.draw.line(window, ladder_color, (left_coord, mid_coord), (right_coord, mid_coord), line_width)
         
-        body = pygame.rect.FRect((self.x_pos, self.y_pos - section_height), (section_width, (ladder_height * self.length + section_height)))
+        body = pygame.rect.Rect((self.x_pos, self.y_pos - section_height), (section_width, (ladder_height * self.length + section_height)))
         return body
             
 
 barrels = pygame.sprite.Group()
-oil_drum = pygame.rect.FRect((0, 0), (0, 0))
+oil_drum = pygame.rect.Rect((0, 0), (0, 0))
 
 class Barrel(pygame.sprite.Sprite):
     
@@ -179,7 +181,7 @@ class Barrel(pygame.sprite.Sprite):
 
     def check_fall(self):
         already_collided = False
-        below = pygame.rect.FRect((self.rect[0], self.rect[1] + section_height), (self.rect[2], section_height))
+        below = pygame.rect.Rect((self.rect[0], self.rect[1] + section_height), (self.rect[2], section_height))
         for lad in ladders:
             if below.colliderect(lad) and not self.falling and not self.check_lad:
                 self.check_lad = True
@@ -197,6 +199,7 @@ class Barrel(pygame.sprite.Sprite):
             barrel.y_change += 2
         
         for i in range(len(platforms)):
+            print(platforms[i])
             if self.bottom.colliderect(platforms[i]):
                 self.y_change = 0
                 self.falling = False
@@ -208,6 +211,38 @@ class Barrel(pygame.sprite.Sprite):
                 # fireball spawn 1/5 random chance
                 if random.randint(0, 4) == 4:
                     fireball_trigger = True
+
+        if not self.falling:
+            if row5_top >= self.rect.bottom or row3_top >= self.rect.bottom >= row4_top or row1_top >= self.rect.bottom >= row2_top:
+                self.x_change = 3
+            else:
+                self.x_change = -3
+        else:
+            self.x_change = 0
+
+        self.rect.move_ip(self.x_change, self.y_change)
+
+        # remove barrel that move off screen
+        if self.rect.top > screen_height:
+            self.kill()
+
+        if self.count < 15:
+            self.count += 1
+        else:
+            self.count = 0
+            
+            if self.x_change > 0:
+                if self.pos < 3:
+                    self.pos += 1
+                else:
+                    self.pos = 0
+            else:
+                if self.pos > 0:
+                    self.pos -= 1
+                else:
+                    self.pos = 3
+
+        self.bottom = pygame.rect.Rect((self.rect[0], self.rect.bottom), (self.rect[2], section_height))
 
         return fireball_trigger
 
@@ -236,6 +271,8 @@ def draw_screen():
     for bridge in bridges:
         bridge_objs.append(Platform(*bridge))
         platforms.append(bridge_objs[-1].top)
+
+    platforms = [platform for platform in platforms if isinstance(platform, Platform)]
     
     
     
@@ -265,7 +302,7 @@ while running:
     else:
         barrel_count = random.randint(0, 120)
         barrel_time = barrel_count - barrel_spawn_time
-        barrel = Barrel(210, 190)
+        barrel = Barrel(190, 190)
         barrels.add(barrel)
 
     for barrel in barrels:
