@@ -36,6 +36,8 @@ barrel_spawn_time = 360
 barrel_count = barrel_spawn_time / 2
 barrel_time = 360
 
+fireball_trigger = False
+
 
 # levels
 active_level = 0
@@ -154,6 +156,7 @@ class Ladder:
             
 
 barrels = pygame.sprite.Group()
+oil_drum = pygame.rect.FRect((0, 0), (0, 0))
 
 class Barrel(pygame.sprite.Sprite):
     
@@ -173,6 +176,41 @@ class Barrel(pygame.sprite.Sprite):
     
     def draw(self):
         window.blit(pygame.transform.rotate(barrel_image, 90 * self.pos), self.rect.topleft)
+
+    def check_fall(self):
+        already_collided = False
+        below = pygame.rect.FRect((self.rect[0], self.rect[1] + section_height), (self.rect[2], section_height))
+        for lad in ladders:
+            if below.colliderect(lad) and not self.falling and not self.check_lad:
+                self.check_lad = True
+                already_collided = True
+                
+                if random.randint(0, 50) == 50:
+                    self.falling = True
+                    self.y_change = 4
+        
+        if not already_collided:
+            self.check_lad = False
+
+    def update(self, fireball_trigger):
+        if self.y_change < 8 and not self.falling:
+            barrel.y_change += 2
+        
+        for i in range(len(platforms)):
+            if self.bottom.colliderect(platforms[i]):
+                self.y_change = 0
+                self.falling = False
+        
+        if self.rect.colliderect(oil_drum):
+            if not self.oil_collision:
+                self.oil_collision = True
+                
+                # fireball spawn 1/5 random chance
+                if random.randint(0, 4) == 4:
+                    fireball_trigger = True
+
+        return fireball_trigger
+
 
 # functions
 def draw_screen():
@@ -227,11 +265,13 @@ while running:
     else:
         barrel_count = random.randint(0, 120)
         barrel_time = barrel_count - barrel_spawn_time
-        barrel = Barrel(270, 270)
+        barrel = Barrel(210, 190)
         barrels.add(barrel)
 
     for barrel in barrels:
         barrel.draw()
+        barrel.check_fall()
+    fireball_trigger = barrels.update(fireball_trigger)
     
     pygame.display.flip()
 
