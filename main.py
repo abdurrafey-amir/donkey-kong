@@ -194,15 +194,23 @@ class Barrel(pygame.sprite.Sprite):
         if not already_collided:
             self.check_lad = False
 
+        # print('falling', self.falling)
+
     def update(self, fireball_trigger):
         if self.y_change < 8 and not self.falling:
-            barrel.y_change += 2
+            self.y_change += 2
         
+        self.bottom = pygame.rect.Rect((self.rect[0], self.rect.bottom - 3), (self.rect[2], 3))
+
         for i in range(len(platforms)):
-            print(platforms[i])
+            # print(platforms[i])
             if self.bottom.colliderect(platforms[i]):
+            # if self.bottom.bottom >= platforms[i].top:
                 self.y_change = 0
                 self.falling = False
+                print("Barrel bottom:", self.bottom)
+                print("Platform:", platforms[i])
+
         
         if self.rect.colliderect(oil_drum):
             if not self.oil_collision:
@@ -213,16 +221,18 @@ class Barrel(pygame.sprite.Sprite):
                     fireball_trigger = True
 
         if not self.falling:
-            if row5_top >= self.rect.bottom or row3_top >= self.rect.bottom >= row4_top or row1_top >= self.rect.bottom >= row2_top:
+            if row5_top >= self.rect.bottom or row3_top >= self.rect.bottom >= row4_top or row1_top > self.rect.bottom >= row2_top:
                 self.x_change = 3
+                # print(self.x_change)
             else:
                 self.x_change = -3
         else:
             self.x_change = 0
-
+        # print(self.x_change)
         self.rect.move_ip(self.x_change, self.y_change)
+        # print(self.x_change)
 
-        # remove barrel that move off screen
+        # remove barrel that moves off screen
         if self.rect.top > screen_height:
             self.kill()
 
@@ -242,8 +252,8 @@ class Barrel(pygame.sprite.Sprite):
                 else:
                     self.pos = 3
 
-        self.bottom = pygame.rect.Rect((self.rect[0], self.rect.bottom), (self.rect[2], section_height))
-
+        # self.bottom = pygame.rect.Rect((self.rect[0], self.rect.bottom), (self.rect[2], 3))
+        # print(self.x_change)
         return fireball_trigger
 
 
@@ -272,7 +282,8 @@ def draw_screen():
         bridge_objs.append(Platform(*bridge))
         platforms.append(bridge_objs[-1].top)
 
-    platforms = [platform for platform in platforms if isinstance(platform, Platform)]
+    # platforms = [platform for platform in platforms if isinstance(platform, Platform)]
+    # platforms = [platform.top for platform in bridge_objs]
     
     
     
@@ -295,7 +306,7 @@ while running:
 
     # draw
     window.fill(black)
-    platforms, ladders = draw_screen()
+    
    
     if barrel_count < barrel_spawn_time:
         barrel_count += 1
@@ -309,7 +320,7 @@ while running:
         barrel.draw()
         barrel.check_fall()
     fireball_trigger = barrels.update(fireball_trigger)
-    
+    platforms, ladders = draw_screen()
     pygame.display.flip()
 
 pygame.quit()
