@@ -38,6 +38,8 @@ barrel_time = 360
 
 fireball_trigger = False
 
+counter = 0
+
 
 # levels
 active_level = 0
@@ -94,8 +96,11 @@ light_blue = pygame.Color('light blue')
 # images
 barrel_image = pygame.image.load('assets/barrel.png')
 barrel_image = pygame.transform.scale(barrel_image, (section_width * 1.5, section_height * 2))
+fire_image = pygame.image.load('assets/fire.png')
+fire_image = pygame.transform.scale(fire_image, (section_width * 2, section_height))
 
-
+# font
+font = pygame.font.Font('freesansbold.ttf', 25)
 
 # classes
 class Platform:
@@ -289,11 +294,47 @@ def draw_screen():
     
     return platforms, climbers
 
+def draw_oil():
+    x_coord, y_coord = 4 * section_width, window_height - 4.5 * section_height
+    oil = pygame.draw.rect(window, blue, (x_coord, y_coord, 2 * section_width, 2.5 * section_height))
+    pygame.draw.rect(window, blue, (x_coord - 0.1 * section_width, y_coord, 2.2 * section_width, 0.2 * section_height))
+    pygame.draw.rect(window, blue, (x_coord - 0.1 * section_width, y_coord + 2.3 * section_height, 2.2 * section_width, 0.2 * section_height))
+    pygame.draw.rect(window, blue, (x_coord - 0.1 * section_width, y_coord + 0.2 * section_height, 0.2 * section_width, 2.1 * section_height))
+    pygame.draw.rect(window, blue, (x_coord, y_coord + 0.5 * section_height, 2 * section_width, 0.2 * section_height))
+    pygame.draw.rect(window, blue, (x_coord, y_coord + 1.7 * section_height, 2 * section_width, 0.2 * section_height))
+
+    window.blit(font.render('OIL', True, white), (x_coord, y_coord + 0.5 * section_height))
+
+    for i in range(4):
+        pygame.draw.circle(window, red, (x_coord + 0.5 * section_width + i * 0.4 * section_width, y_coord + 2.1 * section_height), 3)
+
+    # flames
+    if counter < 15 or 30 < counter < 45:
+        window.blit(fire_image, (x_coord, y_coord - section_height))
+    else:
+        window.blit(pygame.transform.flip(fire_image, True, False), (x_coord, y_coord - section_height))
+
+    return oil
+
+
+def draw_extras():
+    # draw oil drum
+    oil = draw_oil()
+
+    # draw barrels
+    # draw_barrels()
+
 
 # main loop
 running = True
 while running:
     clock.tick(60)
+
+    if counter < 60:
+        counter += 1
+    else:
+        counter = 0
+
 
     # events
     for event in pygame.event.get():
@@ -307,7 +348,10 @@ while running:
     # draw
     window.fill(black)
     
-   
+    platforms, ladders = draw_screen()
+    
+    oildrum = draw_extras()
+    
     if barrel_count < barrel_spawn_time:
         barrel_count += 1
     else:
@@ -319,8 +363,8 @@ while running:
     for barrel in barrels:
         barrel.draw()
         barrel.check_fall()
-    fireball_trigger = barrels.update(fireball_trigger)
-    platforms, ladders = draw_screen()
+        fireball_trigger = barrels.update(fireball_trigger)
+    
     pygame.display.flip()
 
 pygame.quit()
